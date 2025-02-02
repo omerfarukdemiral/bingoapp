@@ -1,77 +1,104 @@
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut,
+  signOut as firebaseSignOut,
   sendPasswordResetEmail,
   updateProfile,
   GoogleAuthProvider,
   signInWithPopup,
+  onAuthStateChanged,
   type User as FirebaseUser,
 } from 'firebase/auth'
-import { auth } from '@/config/firebase'
+import { auth } from '@/lib/firebase'
 import { userService } from './user.service'
 import type { User } from '@/types/user'
-
-const googleProvider = new GoogleAuthProvider()
-googleProvider.setCustomParameters({
-  prompt: 'select_account'
-})
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 
 export const authService = {
   async signUp(email: string, password: string, name: string): Promise<User> {
     const { user: firebaseUser } = await createUserWithEmailAndPassword(auth, email, password)
     await updateProfile(firebaseUser, { displayName: name })
 
-    const user: Omit<User, 'id' | 'createdAt' | 'updatedAt'> = {
+    const newUser = {
       email,
       name,
-      role: 'user',
-      createdEvents: [],
-      participatedEvents: [],
+      role: 'user' as const,
+      isActive: true,
       totalPoints: 0,
+      completedEvents: 0,
     }
 
-    const userId = await userService.createUser(user)
+    // Firestore'a kullanıcı verilerini kaydet
+    await setDoc(doc(db, 'users', firebaseUser.uid), {
+      ...newUser,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
     return {
-      ...user,
-      id: userId,
+      id: firebaseUser.uid,
+      ...newUser,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
   },
 
   async signInWithGoogle(): Promise<User> {
-    const { user: firebaseUser } = await signInWithPopup(auth, googleProvider)
+    const provider = new GoogleAuthProvider()
+    const { user: firebaseUser } = await signInWithPopup(auth, provider)
     
-    const existingUser = await userService.getUser(firebaseUser.uid)
-    if (existingUser) return existingUser
+    try {
+      let userData = await userService.getUser(firebaseUser.uid)
+      
+      if (!userData) {
+        const newUser = {
+          name: firebaseUser.displayName || 'İsimsiz Kullanıcı',
+          email: firebaseUser.email!,
+          avatarUrl: firebaseUser.photoURL || undefined,
+          role: 'user' as const,
+          isActive: true,
+          totalPoints: 0,
+          completedEvents: 0,
+        }
 
-    const user: Omit<User, 'id' | 'createdAt' | 'updatedAt'> = {
-      email: firebaseUser.email!,
-      name: firebaseUser.displayName || 'İsimsiz Kullanıcı',
-      avatarUrl: firebaseUser.photoURL || undefined,
-      role: 'user',
-      createdEvents: [],
-      participatedEvents: [],
-      totalPoints: 0,
-    }
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
+          ...newUser,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
 
-    const userId = await userService.createUser(user)
-    return {
-      ...user,
-      id: userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+        userData = {
+          id: firebaseUser.uid,
+          ...newUser,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+
+        console.log('🆕 Yeni kullanıcı oluşturuldu:', userData)
+      }
+
+      console.log('🎉 Google ile giriş başarılı:', userData)
+      return userData
+    } catch (error) {
+      console.error('Google giriş hatası:', error)
+      throw error
     }
   },
 
-  async signIn(email: string, password: string): Promise<FirebaseUser> {
-    const { user } = await signInWithEmailAndPassword(auth, email, password)
-    return user
+  async signIn(email: string, password: string): Promise<User> {
+    const { user: firebaseUser } = await signInWithEmailAndPassword(auth, email, password)
+    const userData = await userService.getUser(firebaseUser.uid)
+    if (!userData) {
+      throw new Error('Kullanıcı verileri bulunamadı')
+    }
+    console.log('🎉 Email ile giriş başarılı:', userData.name)
+    return userData
   },
 
   async signOut(): Promise<void> {
-    await signOut(auth)
+    await firebaseSignOut(auth)
+    console.log('👋 Çıkış yapıldı')
   },
 
   async resetPassword(email: string): Promise<void> {
@@ -82,7 +109,24 @@ export const authService = {
     return auth.currentUser
   },
 
-  onAuthStateChanged(callback: (user: FirebaseUser | null) => void): () => void {
-    return auth.onAuthStateChanged(callback)
+  onAuthStateChanged(callback: (user: User | null) => void) {
+    return onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const userData = await userService.getUser(firebaseUser.uid)
+          if (userData) {
+            callback(userData)
+          } else {
+            console.error('Kullanıcı verileri bulunamadı:', firebaseUser.uid)
+            callback(null)
+          }
+        } catch (error) {
+          console.error('Kullanıcı verileri getirme hatası:', error)
+          callback(null)
+        }
+      } else {
+        callback(null)
+      }
+    })
   },
 } 

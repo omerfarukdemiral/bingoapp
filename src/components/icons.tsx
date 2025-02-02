@@ -1,8 +1,25 @@
-import { LucideProps, Loader2, Plus, QrCode, Scan, type Icon as LucideIcon, Home, Calendar, Users, BarChart, Settings } from "lucide-react"
+import { LucideProps, Loader2, Plus, QrCode, Scan, type Icon as LucideIcon, Home, Calendar, Users, BarChart, Settings, LogOut, User } from "lucide-react"
 
 export type Icon = typeof LucideIcon
 
 export const Icons = {
+  logo: (props: LucideProps) => (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+      <path d="M8 7h6" />
+      <path d="M8 11h8" />
+      <path d="M8 15h6" />
+    </svg>
+  ),
   spinner: Loader2,
   plus: Plus,
   qrcode: QrCode,
@@ -29,4 +46,6 @@ export const Icons = {
       />
     </svg>
   ),
+  user: User,
+  logout: LogOut,
 } 

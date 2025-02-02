@@ -19,6 +19,7 @@ export default function CreateEventPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isTimeboxed, setIsTimeboxed] = useState(false)
+  const [startDate, setStartDate] = useState<Date>(new Date())
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -31,24 +32,29 @@ export default function CreateEventPage() {
     const name = formData.get('name') as string
     const description = formData.get('description') as string
     const maxParticipants = parseInt(formData.get('maxParticipants') as string)
-    const duration = isTimeboxed ? parseInt(formData.get('duration') as string) : undefined
+    const duration = isTimeboxed ? parseInt(formData.get('duration') as string) || null : null
+    const eventStartDate = new Date(formData.get('startDate') as string)
 
     try {
-      const event: Omit<Event, 'id' | 'createdAt' | 'updatedAt' | 'cards' | 'currentParticipants'> = {
+      const event: Omit<Event, 'id' | 'createdAt' | 'updatedAt'> = {
         name,
         description,
         maxParticipants,
-        startDate: new Date(),
+        currentParticipants: 0,
+        startDate: eventStartDate,
         isTimeboxed,
-        duration,
-        status: 'draft',
+        ...(duration && { duration }),
+        status: 'active',
         createdBy: user.id,
       }
 
+      console.log('📝 Etkinlik oluşturma isteği:', event)
       const eventId = await eventService.createEvent(event)
+      console.log('✅ Etkinlik oluşturuldu:', eventId)
       router.push(`/events/${eventId}`)
     } catch (error) {
-      setError('Etkinlik oluşturulurken bir hata oluştu.')
+      console.error('❌ Etkinlik oluşturma hatası:', error)
+      setError(error instanceof Error ? error.message : 'Etkinlik oluşturulurken bir hata oluştu.')
     } finally {
       setLoading(false)
     }
@@ -121,6 +127,18 @@ export default function CreateEventPage() {
                 />
               </div>
             )}
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Başlangıç Tarihi ve Saati</Label>
+              <Input
+                id="startDate"
+                name="startDate"
+                type="datetime-local"
+                required
+                disabled={loading}
+                min={new Date().toISOString().slice(0, 16)}
+                defaultValue={new Date().toISOString().slice(0, 16)}
+              />
+            </div>
             {error && (
               <div className="text-sm text-red-500">
                 {error}

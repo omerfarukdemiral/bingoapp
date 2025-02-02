@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, query, where, addDoc, updateDoc, deleteDoc, orderBy, limit } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, query, where, addDoc, updateDoc, deleteDoc, orderBy, limit, setDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import type { Event, BingoCard, EventParticipant } from '@/types/event'
 import { userService } from './user.service'
@@ -35,15 +35,44 @@ const SAMPLE_QUESTIONS = [
 ]
 
 export const eventService = {
-  async createEvent(event: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
-      ...event,
-      currentParticipants: 0,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    return docRef.id
+  async createEvent(eventData: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+    try {
+      console.log('📝 Etkinlik oluşturma başladı:', eventData)
+      
+      const eventsRef = collection(db, 'events')
+      const newEventRef = doc(eventsRef)
+      
+      // Undefined değerleri filtrele
+      const eventDataToSave = {
+        id: newEventRef.id,
+        name: eventData.name,
+        description: eventData.description,
+        maxParticipants: eventData.maxParticipants,
+        currentParticipants: eventData.currentParticipants,
+        startDate: eventData.startDate,
+        isTimeboxed: eventData.isTimeboxed,
+        status: eventData.status,
+        createdBy: eventData.createdBy,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+
+      // Opsiyonel alanları sadece değer varsa ekle
+      if (eventData.duration) {
+        eventDataToSave['duration'] = eventData.duration
+      }
+
+      await setDoc(newEventRef, eventDataToSave)
+      console.log('✅ Etkinlik başarıyla oluşturuldu:', eventDataToSave.id)
+      
+      return eventDataToSave.id
+    } catch (error) {
+      console.error('❌ Etkinlik oluşturma hatası:', error)
+      if (error instanceof Error) {
+        throw new Error(`Etkinlik oluşturulamadı: ${error.message}`)
+      }
+      throw new Error('Etkinlik oluşturulurken beklenmeyen bir hata oluştu')
+    }
   },
 
   async getEvent(id: string): Promise<Event | null> {
@@ -53,13 +82,28 @@ export const eventService = {
   },
 
   async getActiveEvents(): Promise<Event[]> {
-    const q = query(
-      collection(db, COLLECTION_NAME),
-      where('isActive', '==', true),
-      orderBy('startDate', 'desc')
-    )
-    const querySnapshot = await getDocs(q)
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Event)
+    try {
+      const q = query(
+        collection(db, 'events'),
+        where('status', '==', 'active'),
+        orderBy('createdAt', 'desc')
+      )
+      
+      const querySnapshot = await getDocs(q)
+      const events = querySnapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+        createdAt: doc.data().createdAt.toDate(),
+        updatedAt: doc.data().updatedAt.toDate(),
+        startDate: doc.data().startDate.toDate(),
+      })) as Event[]
+
+      console.log('📋 Aktif etkinlikler getirildi:', events.length)
+      return events
+    } catch (error) {
+      console.error('❌ Etkinlikleri getirme hatası:', error)
+      throw error
+    }
   },
 
   async getEventParticipants(eventId: string): Promise<EventParticipant[]> {
@@ -164,7 +208,6 @@ export const eventService = {
 
   async checkEventDate(eventId: string): Promise<{
     isStarted: boolean
-    isEnded: boolean
     message?: string
   }> {
     const event = await this.getEvent(eventId)
@@ -174,15 +217,19 @@ export const eventService = {
 
     const now = new Date()
     const startDate = event.startDate ? new Date(event.startDate) : new Date()
-    const endDate = event.endDate ? new Date(event.endDate) : new Date()
+    const isStarted = now >= startDate
+
+    // Etkinlik süresi dolmuşsa (eğer süre sınırı varsa)
+    const isTimeExpired = event.isTimeboxed && event.duration 
+      ? now > new Date(startDate.getTime() + event.duration * 60000)
+      : false
 
     return {
-      isStarted: now >= startDate,
-      isEnded: now > endDate,
+      isStarted,
       message: now < startDate
         ? `Etkinlik ${startDate.toLocaleDateString('tr-TR')} tarihinde başlayacak`
-        : now > endDate
-        ? `Etkinlik ${endDate.toLocaleDateString('tr-TR')} tarihinde sona erdi`
+        : isTimeExpired
+        ? `Etkinlik süresi doldu`
         : `Etkinlik devam ediyor`,
     }
   },

@@ -2,12 +2,13 @@ export interface User {
   id: string
   name: string
   email: string
+  avatarUrl?: string
   role: 'user' | 'admin'
   isActive: boolean
   totalPoints: number
   completedEvents: number
-  createdAt: string
-  updatedAt: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface UserProfile {
@@ -33,4 +34,11 @@ export interface UserStats {
   bingoCount: number
   averageCompletionTime: number // dakika cinsinden
   fastestCompletion: number // dakika cinsinden
+}
+
+// Yeni kullanıcı oluşturma için tip
+export type NewUser = Omit<User, 'id' | 'createdAt' | 'updatedAt'> & {
+  id?: string
+  createdAt?: Date
+  updatedAt?: Date
 } 

@@ -14,19 +14,24 @@ export interface BingoCard {
   updatedAt: string
 }
 
+export interface EventDateCheck {
+  isStarted: boolean
+  message?: string
+}
+
 export interface Event {
   id: string
   name: string
   description: string
-  startDate: string
-  endDate: string
-  location: string
-  createdBy: string
   currentParticipants: number
-  participantLimit: number
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
+  maxParticipants: number
+  isTimeboxed: boolean
+  duration?: number
+  createdBy: string
+  startDate: Date
+  createdAt: Date
+  updatedAt: Date
+  status: 'active' | 'completed' | 'cancelled'
 }
 
 export interface EventParticipant {

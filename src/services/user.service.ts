@@ -1,24 +1,61 @@
 import { collection, doc, getDoc, getDocs, query, where, addDoc, updateDoc, orderBy, limit as firestoreLimit } from 'firebase/firestore'
-import { db } from '@/config/firebase'
+import { db } from '@/lib/firebase'
 import type { User, UserProfile, UserStats } from '@/types/user'
 import { eventService } from './event.service'
+import { setDoc } from 'firebase/firestore'
+import { Timestamp } from 'firebase/firestore'
 
 const COLLECTION_NAME = 'users'
 
 export const userService = {
-  async createUser(user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    const docRef = await addDoc(collection(db, COLLECTION_NAME), {
-      ...user,
+  async createUser(uid: string, userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+    const user: User = {
+      id: uid,
+      ...userData,
       createdAt: new Date(),
       updatedAt: new Date(),
-    })
-    return docRef.id
+    }
+
+    try {
+      await setDoc(doc(db, 'users', uid), user)
+      console.log('👤 Yeni kullanıcı oluşturuldu:', user.name)
+      return user
+    } catch (error) {
+      console.error('Kullanıcı oluşturma hatası:', error)
+      throw error
+    }
   },
 
-  async getUser(id: string): Promise<User | null> {
-    const docRef = doc(db, COLLECTION_NAME, id)
-    const docSnap = await getDoc(docRef)
-    return docSnap.exists() ? { id: docSnap.id, ...docSnap.data() } as User : null
+  async getUser(uid: string): Promise<User | null> {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', uid))
+      if (!userDoc.exists()) {
+        console.log('❌ Kullanıcı bulunamadı:', uid)
+        return null
+      }
+
+      const data = userDoc.data()
+      if (!data) return null
+
+      const userData: User = {
+        id: uid,
+        name: data.name,
+        email: data.email,
+        avatarUrl: data.avatarUrl,
+        role: data.role as 'user' | 'admin',
+        isActive: data.isActive,
+        totalPoints: data.totalPoints,
+        completedEvents: data.completedEvents,
+        createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt),
+        updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : new Date(data.updatedAt),
+      }
+
+      console.log('✅ Kullanıcı verileri getirildi:', userData)
+      return userData
+    } catch (error) {
+      console.error('Kullanıcı getirme hatası:', error)
+      throw error
+    }
   },
 
   async getAllUsers(): Promise<User[]> {
@@ -30,12 +67,18 @@ export const userService = {
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as User)
   },
 
-  async updateUser(id: string, user: Partial<User>): Promise<void> {
-    const docRef = doc(db, COLLECTION_NAME, id)
-    await updateDoc(docRef, {
-      ...user,
-      updatedAt: new Date(),
-    })
+  async updateUser(uid: string, data: Partial<User>): Promise<void> {
+    try {
+      const userRef = doc(db, 'users', uid)
+      await updateDoc(userRef, {
+        ...data,
+        updatedAt: new Date(),
+      })
+      console.log('✏️ Kullanıcı güncellendi:', uid)
+    } catch (error) {
+      console.error('Kullanıcı güncelleme hatası:', error)
+      throw error
+    }
   },
 
   async getUserProfile(userId: string): Promise<UserProfile | null> {

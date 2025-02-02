@@ -1,58 +1,69 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import type { User as FirebaseUser } from 'firebase/auth'
-import { authService } from '@/services/auth.service'
-import { userService } from '@/services/user.service'
+import { createContext, useContext, useEffect, useState } from 'react'
 import type { User } from '@/types/user'
+import { authService } from '@/services/auth.service'
+import { useRouter } from 'next/navigation'
 
 interface AuthContextType {
   user: User | null
   loading: boolean
-  firebaseUser: FirebaseUser | null
+  signIn: (email: string, password: string) => Promise<void>
+  signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null)
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    const unsubscribe = authService.onAuthStateChanged(async (user) => {
-      setFirebaseUser(user)
-      
-      if (user) {
-        try {
-          const userData = await userService.getUser(user.uid)
-          setUser(userData)
-        } catch (error) {
-          console.error('Error fetching user data:', error)
-        }
-      } else {
-        setUser(null)
-      }
-      
+    const unsubscribe = authService.onAuthStateChanged((user) => {
+      setUser(user)
       setLoading(false)
     })
 
     return () => unsubscribe()
   }, [])
 
+  const signIn = async (email: string, password: string) => {
+    try {
+      const user = await authService.signIn(email, password)
+      setUser(user)
+      router.push('/')
+    } catch (error) {
+      console.error('Giriş hatası:', error)
+      throw error
+    }
+  }
+
+  const signInWithGoogle = async () => {
+    try {
+      const user = await authService.signInWithGoogle()
+      setUser(user)
+      router.push('/')
+    } catch (error) {
+      console.error('Google giriş hatası:', error)
+      throw error
+    }
+  }
+
   const signOut = async () => {
     try {
       await authService.signOut()
       setUser(null)
-      setFirebaseUser(null)
+      router.push('/login')
     } catch (error) {
-      console.error('Error signing out:', error)
+      console.error('Çıkış hatası:', error)
+      throw error
     }
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, firebaseUser, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   )
