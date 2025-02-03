@@ -1,76 +1,135 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useAuth } from '@/context/auth.context'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Icons } from '@/components/icons'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Icons } from '@/components/icons'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { motion } from 'framer-motion'
+
+const navItems = [
+  { href: '/', label: 'Ana Sayfa', icon: Icons.home },
+  { href: '/events', label: 'Etkinlikler', icon: Icons.calendar },
+  { href: '/leaderboard', label: 'Sıralama', icon: Icons.trophy },
+]
 
 export function Header() {
   const { user, signOut } = useAuth()
+  const pathname = usePathname()
 
-  const handleSignOut = async () => {
-    try {
-      await signOut()
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase()
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <Link href="/" className="flex items-center space-x-2">
-          <Icons.logo />
-          <span className="font-bold">IceBreaker Bingo</span>
-        </Link>
+    <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur-sm">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center space-x-2">
+            <Icons.logo className="h-6 w-6 text-[#845EC2]" />
+            <span className="font-bold text-gray-800">IceBreaker Bingo</span>
+          </Link>
 
-        <nav className="flex flex-1 items-center justify-end space-x-4">
+          <nav className="flex items-center space-x-4 lg:space-x-6">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`nav-link group flex items-center space-x-2 ${
+                    isActive ? 'text-[#845EC2] font-medium' : ''
+                  }`}
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <item.icon className="h-4 w-4" />
+                  </motion.div>
+                  <span>{item.label}</span>
+                  {isActive && (
+                    <motion.div
+                      className="absolute bottom-0 left-0 h-0.5 w-full bg-[#845EC2]"
+                      layoutId="navbar-indicator"
+                    />
+                  )}
+                </Link>
+              )
+            })}
+          </nav>
+        </div>
+
+        <div className="flex items-center space-x-4">
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatarUrl} alt={user.name} />
-                    <AvatarFallback>
-                      {user.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
+                <Button
+                  variant="ghost"
+                  className="relative h-10 w-10 rounded-full hover:bg-gray-100"
+                >
+                  <Avatar className="h-10 w-10">
+                    {user.photoURL ? (
+                      <AvatarImage
+                        src={user.photoURL}
+                        alt={user.displayName || ''}
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <AvatarFallback className="bg-[#845EC2]/10 text-[#845EC2]">
+                        {getInitials(user.displayName || '')}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
                   </div>
-                </div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">
+                  <Link href="/profile" className="flex items-center cursor-pointer">
                     <Icons.user className="mr-2 h-4 w-4" />
                     <span>Profil</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSignOut}>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="flex items-center cursor-pointer">
+                    <Icons.settings className="mr-2 h-4 w-4" />
+                    <span>Ayarlar</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => signOut()}
+                  className="text-red-600 focus:text-red-600 cursor-pointer"
+                >
                   <Icons.logout className="mr-2 h-4 w-4" />
                   <span>Çıkış Yap</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link href="/login">
-              <Button variant="default">Giriş Yap</Button>
-            </Link>
+            <Button asChild variant="secondary">
+              <Link href="/login">Giriş Yap</Link>
+            </Button>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   )

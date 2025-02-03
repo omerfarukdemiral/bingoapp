@@ -43,7 +43,7 @@ export const eventService = {
       const newEventRef = doc(eventsRef)
       
       // Undefined değerleri filtrele
-      const eventDataToSave = {
+      const eventDataToSave: Omit<Event, 'id'> & { id: string } = {
         id: newEventRef.id,
         name: eventData.name,
         description: eventData.description,
@@ -51,6 +51,7 @@ export const eventService = {
         currentParticipants: eventData.currentParticipants,
         startDate: eventData.startDate,
         isTimeboxed: eventData.isTimeboxed,
+        duration: eventData.duration,
         status: eventData.status,
         createdBy: eventData.createdBy,
         createdAt: new Date(),
@@ -84,21 +85,31 @@ export const eventService = {
   async getActiveEvents(): Promise<Event[]> {
     try {
       const q = query(
-        collection(db, 'events'),
+        collection(db, COLLECTION_NAME),
         where('status', '==', 'active'),
         orderBy('createdAt', 'desc')
       )
       
       const querySnapshot = await getDocs(q)
-      const events = querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        createdAt: doc.data().createdAt.toDate(),
-        updatedAt: doc.data().updatedAt.toDate(),
-        startDate: doc.data().startDate.toDate(),
-      })) as Event[]
+      const events = querySnapshot.docs.map(doc => {
+        const data = doc.data()
+        return {
+          id: doc.id,
+          name: data.name,
+          description: data.description,
+          currentParticipants: data.currentParticipants,
+          maxParticipants: data.maxParticipants,
+          isTimeboxed: data.isTimeboxed,
+          duration: data.duration,
+          createdBy: data.createdBy,
+          startDate: data.startDate.toDate(),
+          createdAt: data.createdAt.toDate(),
+          updatedAt: data.updatedAt.toDate(),
+          status: data.status,
+        } as Event
+      })
 
-      console.log('📋 Aktif etkinlikler getirildi:', events.length)
+      console.log('📋 Aktif etkinlikler getirildi:', events)
       return events
     } catch (error) {
       console.error('❌ Etkinlikleri getirme hatası:', error)
@@ -232,5 +243,87 @@ export const eventService = {
         ? `Etkinlik süresi doldu`
         : `Etkinlik devam ediyor`,
     }
+  },
+
+  async joinEvent(eventId: string, userId: string): Promise<string> {
+    try {
+      const event = await this.getEvent(eventId)
+      if (!event) throw new Error('Etkinlik bulunamadı')
+      
+      // Katılımcı limitini kontrol et
+      if (event.currentParticipants >= event.maxParticipants) {
+        throw new Error('Etkinlik katılımcı limiti dolmuş')
+      }
+
+      // Rastgele sorular seç
+      const shuffledQuestions = SAMPLE_QUESTIONS
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 25)
+        .map((text, index) => ({
+          id: `q${index + 1}`,
+          text,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }))
+
+      // Yeni bingo kartı oluştur
+      const cardRef = await addDoc(collection(db, 'bingoCards'), {
+        eventId,
+        questions: shuffledQuestions,
+        completedQuestions: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+
+      // Katılımcı kaydı oluştur
+      await addDoc(collection(db, 'eventParticipants'), {
+        eventId,
+        userId,
+        cardId: cardRef.id,
+        points: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })
+
+      // Etkinlik katılımcı sayısını güncelle
+      await updateDoc(doc(db, 'events', eventId), {
+        currentParticipants: event.currentParticipants + 1,
+        updatedAt: new Date(),
+      })
+
+      return cardRef.id
+    } catch (error) {
+      console.error('Etkinliğe katılma hatası:', error)
+      throw error
+    }
+  },
+
+  async completeQuestion(cardId: string, questionId: string): Promise<void> {
+    const cardRef = doc(db, 'bingoCards', cardId)
+    const cardDoc = await getDoc(cardRef)
+    
+    if (!cardDoc.exists()) throw new Error('Bingo kartı bulunamadı')
+    
+    const card = cardDoc.data() as BingoCard
+    if (card.completedQuestions.includes(questionId)) {
+      throw new Error('Bu soru zaten tamamlanmış')
+    }
+
+    await updateDoc(cardRef, {
+      completedQuestions: [...card.completedQuestions, questionId],
+      updatedAt: new Date().toISOString(),
+    })
+  },
+
+  async verifyQRCode(data: {
+    cardId: string
+    questionId: string
+    userId: string
+    timestamp: number
+  }): Promise<boolean> {
+    // QR kod doğrulama mantığı
+    const now = Date.now()
+    const isValid = now - data.timestamp < 5 * 60 * 1000 // 5 dakika geçerli
+    return isValid
   },
 }

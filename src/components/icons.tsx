@@ -1,4 +1,4 @@
-import { LucideProps, Loader2, Plus, QrCode, Scan, type Icon as LucideIcon, Home, Calendar, Users, BarChart, Settings, LogOut, User } from "lucide-react"
+import { LucideProps, Loader2, Plus, QrCode, Scan, type Icon as LucideIcon, Home, Calendar, Users, BarChart, Settings, LogOut, User, Clock, Trophy } from "lucide-react"
 
 export type Icon = typeof LucideIcon
 
@@ -48,4 +48,6 @@ export const Icons = {
   ),
   user: User,
   logout: LogOut,
+  clock: Clock,
+  trophy: Trophy,
 } 

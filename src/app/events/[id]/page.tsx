@@ -1,5 +1,6 @@
 'use client'
 
+import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth.context'
@@ -10,13 +11,8 @@ import { BingoCard } from '@/components/bingo/card'
 import { eventService } from '@/services/event.service'
 import type { Event, BingoCard as BingoCardType } from '@/types/event'
 
-interface EventPageProps {
-  params: {
-    id: string
-  }
-}
-
-export default function EventPage({ params }: EventPageProps) {
+export default function EventPage() {
+  const params = useParams()
   const router = useRouter()
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -28,17 +24,19 @@ export default function EventPage({ params }: EventPageProps) {
 
   useEffect(() => {
     const loadEvent = async () => {
+      const eventId = params?.id as string
+      if (!eventId) return
+
       try {
-        const event = await eventService.getEvent(params.id)
-        if (!event) {
+        const eventData = await eventService.getEvent(eventId)
+        if (!eventData) {
           router.push('/events')
           return
         }
-        setEvent(event)
+        setEvent(eventData)
 
-        // Kullanıcının kartını bul
         if (user) {
-          const participants = await eventService.getEventParticipants(event.id)
+          const participants = await eventService.getEventParticipants(eventData.id)
           const participant = participants.find(p => p.userId === user.id)
           if (participant) {
             const card = await eventService.getBingoCard(participant.cardId)
@@ -46,6 +44,7 @@ export default function EventPage({ params }: EventPageProps) {
           }
         }
       } catch (error) {
+        console.error('Etkinlik yükleme hatası:', error)
         setError('Etkinlik yüklenirken bir hata oluştu.')
       } finally {
         setLoading(false)
@@ -53,7 +52,7 @@ export default function EventPage({ params }: EventPageProps) {
     }
 
     loadEvent()
-  }, [params.id, user, router])
+  }, [params?.id, user, router])
 
   const handleJoin = async () => {
     if (!user || !event) return

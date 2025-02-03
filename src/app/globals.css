@@ -4,33 +4,38 @@
  
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    /* Koyu arka plan için açık renkler */
+    --background: 264 30% 98%;
+    --foreground: 264 10% 10%;
  
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    /* Kartlar için hafif tonlar */
+    --card: 264 25% 99%;
+    --card-foreground: 264 10% 10%;
  
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 20% 98%;
+    /* Menü ve dropdown için */
+    --popover: 264 25% 99%;
+    --popover-foreground: 264 10% 10%;
  
-    --secondary: 327.4 73.6% 60.6%;
-    --secondary-foreground: 210 20% 98%;
+    /* Ana renkler */
+    --primary: 264 50% 57%;    /* #845EC2 */
+    --primary-foreground: 0 0% 100%;
  
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --secondary: 315 60% 60%;  /* #D65DB1 */
+    --secondary-foreground: 0 0% 100%;
  
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 348 100% 72%;    /* #FF6F91 */
+    --accent-foreground: 0 0% 100%;
  
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 262.1 83.3% 57.8%;
+    /* Metin renkleri */
+    --muted: 264 20% 90%;
+    --muted-foreground: 264 10% 40%;
+ 
+    --destructive: 0 100% 40%;
+    --destructive-foreground: 0 100% 98%;
+ 
+    --border: 264 20% 85%;
+    --input: 264 20% 85%;
+    --ring: 264 50% 57%;
  
     --radius: 0.75rem;
   }
@@ -76,15 +81,49 @@
   }
 
   .card-hover {
-    @apply transition-transform duration-300 hover:scale-[1.02] hover:shadow-lg;
+    @apply transition-all duration-300 hover:scale-[1.02]
+           bg-white/95 backdrop-blur-sm border-[#845EC2]/10
+           hover:shadow-lg hover:shadow-[#845EC2]/10;
   }
 
   .nav-link {
-    @apply transition-colors duration-200 hover:text-primary;
+    @apply relative px-4 py-2 text-gray-800 hover:text-[#845EC2] transition-colors;
   }
 
-  .button-gradient {
-    @apply bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 transition-opacity;
+  .nav-link::after {
+    @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 
+           bg-[#F9F871] transition-all duration-300;
+  }
+
+  .nav-link:hover::after {
+    @apply w-full;
+  }
+
+  .bingo-card {
+    @apply bg-gradient-to-br from-[#845EC2]/20 via-white to-[#FF6F91]/20 
+           rounded-xl shadow-lg p-6;
+  }
+
+  .bingo-cell {
+    @apply bg-white/90 backdrop-blur-sm rounded-lg p-4 transition-all duration-300 
+           hover:shadow-md hover:scale-[1.02] cursor-pointer
+           border border-[#D65DB1]/20;
+  }
+
+  .bingo-cell.completed {
+    @apply bg-[#F9F871]/20 border-[#F9F871]/50;
+  }
+
+  .button-primary {
+    @apply bg-[#845EC2] hover:bg-[#845EC2]/90 text-white
+           shadow-md shadow-[#845EC2]/20
+           transition-all duration-300 transform hover:scale-105;
+  }
+
+  .button-secondary {
+    @apply bg-[#D65DB1] hover:bg-[#D65DB1]/90 text-white
+           shadow-md shadow-[#D65DB1]/20
+           transition-all duration-300 transform hover:scale-105;
   }
 
   .section-padding {
@@ -94,6 +133,14 @@
   .container-padding {
     @apply px-4 md:px-6;
   }
+
+  .header-gradient {
+    @apply bg-gradient-to-r from-[#845EC2] to-[#D65DB1];
+  }
+
+  .header-content {
+    @apply text-white font-semibold text-lg;
+  }
 }
 
 @layer base {
@@ -101,7 +148,72 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gradient-to-br from-[#845EC2] via-[#D65DB1] to-[#FF6F91] min-h-screen;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+/* Kartlar için gradient */
+.card-gradient {
+  @apply bg-white/95 backdrop-blur-sm;
+  box-shadow: 0 0 20px rgba(132, 94, 194, 0.1);
+}
+
+/* Hover efektli kartlar */
+.card-hover {
+  @apply transition-all duration-300 hover:scale-[1.02]
+         bg-white/95 backdrop-blur-sm border-[#845EC2]/10
+         hover:shadow-lg hover:shadow-[#845EC2]/10;
+}
+
+/* Navbar için özel stiller */
+.nav-link {
+  @apply relative px-4 py-2 text-gray-800 hover:text-[#845EC2] transition-colors;
+}
+
+.nav-link::after {
+  @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 
+         bg-[#F9F871] transition-all duration-300;
+}
+
+.nav-link:hover::after {
+  @apply w-full;
+}
+
+/* Bingo kartları için özel stiller */
+.bingo-card {
+  @apply bg-gradient-to-br from-[#845EC2]/20 via-white to-[#FF6F91]/20 
+         rounded-xl shadow-lg p-6;
+}
+
+.bingo-cell {
+  @apply bg-white/90 backdrop-blur-sm rounded-lg p-4 transition-all duration-300 
+         hover:shadow-md hover:scale-[1.02] cursor-pointer
+         border border-[#D65DB1]/20;
+}
+
+.bingo-cell.completed {
+  @apply bg-[#F9F871]/20 border-[#F9F871]/50;
+}
+
+/* Animasyonlu butonlar */
+.button-primary {
+  @apply bg-[#845EC2] hover:bg-[#845EC2]/90 text-white
+         shadow-md shadow-[#845EC2]/20
+         transition-all duration-300 transform hover:scale-105;
+}
+
+.button-secondary {
+  @apply bg-[#D65DB1] hover:bg-[#D65DB1]/90 text-white
+         shadow-md shadow-[#D65DB1]/20
+         transition-all duration-300 transform hover:scale-105;
+}
+
+/* Header için özel stil */
+.header-gradient {
+  @apply bg-gradient-to-r from-[#845EC2] to-[#D65DB1];
+}
+
+.header-content {
+  @apply text-white font-semibold text-lg;
 } 

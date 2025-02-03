@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button'
 import { Icons } from '@/components/icons'
 import { eventService } from '@/services/event.service'
 import type { Event } from '@/types/event'
+import { format } from 'date-fns'
+import { tr } from 'date-fns/locale'
+import { motion } from 'framer-motion'
 
 export default function EventsPage() {
   const { user } = useAuth()
@@ -19,8 +22,10 @@ export default function EventsPage() {
     const loadEvents = async () => {
       try {
         const events = await eventService.getActiveEvents()
+        console.log('Yüklenen etkinlikler:', events)
         setEvents(events)
       } catch (error) {
+        console.error('Etkinlik yükleme hatası:', error)
         setError('Etkinlikler yüklenirken bir hata oluştu.')
       } finally {
         setLoading(false)
@@ -29,24 +34,6 @@ export default function EventsPage() {
 
     loadEvents()
   }, [])
-
-  if (loading) {
-    return (
-      <div className="container max-w-4xl py-10">
-        <div className="flex items-center justify-center">
-          <Icons.spinner className="h-8 w-8 animate-spin" />
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="container max-w-4xl py-10">
-        <div className="text-center text-red-500">{error}</div>
-      </div>
-    )
-  }
 
   return (
     <div className="container max-w-4xl py-10">
@@ -62,7 +49,13 @@ export default function EventsPage() {
         )}
       </div>
 
-      {events.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center">
+          <Icons.spinner className="h-8 w-8 animate-spin" />
+        </div>
+      ) : error ? (
+        <div className="text-center text-red-500">{error}</div>
+      ) : events.length === 0 ? (
         <Card>
           <CardContent className="py-8">
             <div className="text-center text-muted-foreground">
@@ -74,26 +67,44 @@ export default function EventsPage() {
         <div className="grid gap-6">
           {events.map((event) => (
             <Link key={event.id} href={`/events/${event.id}`}>
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle>{event.name}</CardTitle>
-                  <CardDescription>
-                    {event.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <div>
-                      {event.currentParticipants} / {event.maxParticipants} Katılımcı
-                    </div>
-                    {event.isTimeboxed && (
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card className="card-hover bg-gradient-to-br from-purple-50 via-white to-green-50">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
                       <div>
-                        Süre: {event.duration} dakika
+                        <CardTitle className="text-xl text-secondary">
+                          {event.name}
+                        </CardTitle>
+                        <CardDescription className="mt-2">
+                          {event.description}
+                        </CardDescription>
                       </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      <div className="text-sm text-primary">
+                        {format(event.startDate, 'dd MMMM yyyy HH:mm', { locale: tr })}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Icons.users className="h-4 w-4 text-primary" />
+                        <span>
+                          {event.currentParticipants} / {event.maxParticipants} Katılımcı
+                        </span>
+                      </div>
+                      {event.isTimeboxed && event.duration && (
+                        <div className="flex items-center gap-2">
+                          <Icons.clock className="h-4 w-4 text-secondary" />
+                          <span>Süre: {event.duration} dakika</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </Link>
           ))}
         </div>

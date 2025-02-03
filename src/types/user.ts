@@ -2,7 +2,7 @@ export interface User {
   id: string
   name: string
   email: string
-  avatarUrl?: string
+  avatarUrl?: string  // Firebase Storage'dan gelecek avatar URL'i
   role: 'user' | 'admin'
   isActive: boolean
   totalPoints: number
