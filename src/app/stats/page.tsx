@@ -38,7 +38,7 @@ export default function StatsPage() {
               const card = await eventService.getBingoCard(participant.cardId)
               if (card) {
                 totalQuestions += card.completedQuestions.length
-                if (checkBingo(card.completedQuestions, card.questions)) {
+                if (checkBingo(card.completedQuestions.map(q => q.id), card.questions)) {
                   completedBingos++
                 }
               }

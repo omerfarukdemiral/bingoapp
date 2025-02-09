@@ -9,9 +9,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Icons } from '@/components/icons'
 import { eventService } from '@/services/event.service'
+import { templates } from '@/config/templates'
 import type { Event } from '@/types/event'
+import type { Template } from '@/config/templates'
 
 export default function CreateEventPage() {
   const router = useRouter()
@@ -19,11 +22,16 @@ export default function CreateEventPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isTimeboxed, setIsTimeboxed] = useState(false)
-  const [startDate, setStartDate] = useState<Date>(new Date())
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null)
+
+  const handleTemplateChange = (templateId: string) => {
+    const template = templates.find(t => t.id === templateId)
+    setSelectedTemplate(template || null)
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!user) return
+    if (!user || !selectedTemplate) return
 
     setError(null)
     setLoading(true)
@@ -33,7 +41,7 @@ export default function CreateEventPage() {
     const description = formData.get('description') as string
     const maxParticipants = parseInt(formData.get('maxParticipants') as string)
     const duration = isTimeboxed ? parseInt(formData.get('duration') as string) || null : null
-    const eventStartDate = new Date(formData.get('startDate') as string)
+    const startDate = new Date(formData.get('startDate') as string)
 
     try {
       const event: Omit<Event, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -41,11 +49,15 @@ export default function CreateEventPage() {
         description,
         maxParticipants,
         currentParticipants: 0,
-        startDate: eventStartDate,
+        startDate,
         isTimeboxed,
         ...(duration && { duration }),
         status: 'active',
         createdBy: user.id,
+        adminId: user.id,
+        templateId: selectedTemplate.id,
+        surveyQuestions: selectedTemplate.surveyQuestions,
+        bingoTasks: selectedTemplate.bingoTasks
       }
 
       console.log('📝 Etkinlik oluşturma isteği:', event)
@@ -66,11 +78,65 @@ export default function CreateEventPage() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl">Yeni Etkinlik Oluştur</CardTitle>
           <CardDescription>
-            Etkinlik detaylarını girin ve katılımcılar için bir Bingo kartı oluşturun.
+            Etkinlik detaylarını girin ve bir şablon seçerek Bingo kartlarını oluşturun.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="template">Etkinlik Şablonu</Label>
+              <Select
+                onValueChange={handleTemplateChange}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Bir şablon seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map(template => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {template.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedTemplate && (
+              <Card className="bg-muted/50">
+                <CardHeader>
+                  <CardTitle>{selectedTemplate.name}</CardTitle>
+                  <CardDescription>{selectedTemplate.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-6">
+                  <div>
+                    <h4 className="mb-2 font-medium">Anket Soruları</h4>
+                    <ul className="list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                      {selectedTemplate.surveyQuestions.map(question => (
+                        <li key={question.id}>{question.text}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="mb-2 font-medium">Bingo Görevleri</h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {selectedTemplate.bingoTasks.map(task => (
+                        <div
+                          key={task.id}
+                          className="p-2 rounded-md bg-background border"
+                        >
+                          <div className="font-medium">{task.text}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {task.category} • {task.points} puan
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="name">Etkinlik Adı</Label>
               <Input
@@ -81,6 +147,7 @@ export default function CreateEventPage() {
                 placeholder="Örn: Startup Networking Etkinliği"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="description">Etkinlik Açıklaması</Label>
               <Textarea
@@ -92,6 +159,7 @@ export default function CreateEventPage() {
                 className="min-h-[100px]"
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="maxParticipants">Maksimum Katılımcı Sayısı</Label>
               <Input
@@ -104,6 +172,7 @@ export default function CreateEventPage() {
                 placeholder="Örn: 50"
               />
             </div>
+
             <div className="flex items-center space-x-2">
               <Switch
                 id="isTimeboxed"
@@ -113,6 +182,7 @@ export default function CreateEventPage() {
               />
               <Label htmlFor="isTimeboxed">Süre Sınırı Koy</Label>
             </div>
+
             {isTimeboxed && (
               <div className="space-y-2">
                 <Label htmlFor="duration">Süre (dakika)</Label>
@@ -127,6 +197,7 @@ export default function CreateEventPage() {
                 />
               </div>
             )}
+
             <div className="space-y-2">
               <Label htmlFor="startDate">Başlangıç Tarihi ve Saati</Label>
               <Input
@@ -139,12 +210,18 @@ export default function CreateEventPage() {
                 defaultValue={new Date().toISOString().slice(0, 16)}
               />
             </div>
+
             {error && (
               <div className="text-sm text-red-500">
                 {error}
               </div>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || !selectedTemplate}
+            >
               {loading ? (
                 <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
               ) : null}

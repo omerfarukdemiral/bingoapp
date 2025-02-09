@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/auth.context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -11,27 +12,29 @@ import type { Event } from '@/types/event'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 
 export default function EventsPage() {
   const { user } = useAuth()
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [events, setEvents] = useState<Event[]>([])
 
-  useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        const events = await eventService.getActiveEvents()
-        console.log('Yüklenen etkinlikler:', events)
-        setEvents(events)
-      } catch (error) {
-        console.error('Etkinlik yükleme hatası:', error)
-        setError('Etkinlikler yüklenirken bir hata oluştu.')
-      } finally {
-        setLoading(false)
-      }
+  const loadEvents = async () => {
+    try {
+      const events = await eventService.getActiveEvents()
+      console.log('Yüklenen etkinlikler:', events)
+      setEvents(events)
+    } catch (error) {
+      console.error('Etkinlik yükleme hatası:', error)
+      setError('Etkinlikler yüklenirken bir hata oluştu.')
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     loadEvents()
   }, [])
 
@@ -81,9 +84,46 @@ export default function EventsPage() {
                         <CardDescription className="mt-2">
                           {event.description}
                         </CardDescription>
+                        <div className="mt-2 text-sm text-muted-foreground">
+                          Oluşturan: {event.createdBy === user?.id ? 'Siz' : 'Başka bir kullanıcı'}
+                        </div>
                       </div>
-                      <div className="text-sm text-primary">
-                        {format(event.startDate, 'dd MMMM yyyy HH:mm', { locale: tr })}
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="text-sm text-primary">
+                          {format(event.startDate, 'dd MMMM yyyy HH:mm', { locale: tr })}
+                        </div>
+                        {event.createdBy === user?.id && (
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                router.push(`/events/${event.id}/edit`)
+                              }}
+                            >
+                              <Icons.settings className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={async (e) => {
+                                e.preventDefault()
+                                if (window.confirm('Bu etkinliği silmek istediğinize emin misiniz?')) {
+                                  try {
+                                    await eventService.removeEvent(event.id, user.id)
+                                    toast.success('Etkinlik başarıyla silindi')
+                                    loadEvents()
+                                  } catch (error) {
+                                    toast.error('Etkinlik silinirken bir hata oluştu')
+                                  }
+                                }
+                              }}
+                            >
+                              <Icons.trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardHeader>

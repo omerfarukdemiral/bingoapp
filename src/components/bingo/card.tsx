@@ -3,16 +3,23 @@
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import type { Question } from '@/types/event'
+import type { Question, CompletedQuestion, BingoCardMatch } from '@/types/event'
 import { Icons } from '@/components/icons'
 import { QRDialog } from '@/components/qr/dialog'
 import ReactConfetti from 'react-confetti'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface BingoCardProps {
   cardId: string
   userId: string
   questions: Question[]
-  completedQuestions: string[]
+  completedQuestions: CompletedQuestion[]
   onQuestionClick?: (questionId: string) => void
   onQuestionVerify?: (data: {
     cardId: string
@@ -35,17 +42,18 @@ export function BingoCard({
   loading = false,
 }: BingoCardProps) {
   const [showConfetti, setShowConfetti] = useState(false)
-  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null)
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null)
+  const [isQRDialogOpen, setIsQRDialogOpen] = useState(false)
   const gridSize = 5 // 5x5 grid
   const hasBingo = checkBingo(completedQuestions, gridSize)
 
   // Bingo kontrolü
-  function checkBingo(completed: string[], size: number): boolean {
+  function checkBingo(completed: CompletedQuestion[], size: number): boolean {
     const matrix = Array(size).fill(null).map(() => Array(size).fill(false))
     
     // Tamamlanan soruları matrise yerleştir
-    completed.forEach(id => {
-      const index = questions.findIndex(q => q.id === id)
+    completed.forEach(q => {
+      const index = questions.findIndex(question => question.id === q.id)
       if (index !== -1) {
         const row = Math.floor(index / size)
         const col = index % size
@@ -78,73 +86,98 @@ export function BingoCard({
     setTimeout(() => setShowConfetti(false), 5000)
   }
 
-  const handleQuestionClick = (questionId: string) => {
-    setSelectedQuestion(questionId)
-    onQuestionClick?.(questionId)
-  }
-
-  const handleQuestionVerify = (data: {
-    cardId: string
-    questionId: string
-    userId: string
-    timestamp: number
-  }) => {
-    onQuestionVerify?.(data)
-    setSelectedQuestion(null)
+  const handleQuestionClick = (question: Question) => {
+    setSelectedQuestion(question)
+    setIsQRDialogOpen(true)
   }
 
   return (
     <div className="relative">
-      {showConfetti && <ReactConfetti recycle={false} numberOfPieces={200} />}
+      {showConfetti && <ReactConfetti />}
       <Card className="w-full max-w-4xl mx-auto">
         <CardContent className="p-6">
           <div className="grid grid-cols-5 gap-2">
-            {questions.map((question, index) => {
-              const isCompleted = completedQuestions.includes(question.id)
-              const isSelected = selectedQuestion === question.id
+            {questions.map((question) => {
+              const isCompleted = completedQuestions.some(q => q.id === question.id)
               return (
-                <div key={question.id} className="relative">
-                  <button
-                    onClick={() => isInteractive && handleQuestionClick(question.id)}
-                    disabled={!isInteractive || loading}
-                    className={cn(
-                      "w-full aspect-square p-2 text-xs sm:text-sm md:text-base rounded-lg border transition-all duration-200",
-                      "hover:border-primary hover:shadow-md",
-                      "flex items-center justify-center text-center",
-                      isCompleted && "bg-primary text-primary-foreground border-primary",
-                      !isInteractive && "cursor-default",
-                      loading && "opacity-50 cursor-not-allowed"
-                    )}
-                  >
-                    {loading ? (
-                      <Icons.spinner className="h-4 w-4 animate-spin" />
-                    ) : (
-                      question.text
-                    )}
-                  </button>
-                  {isSelected && (
-                    <div className="absolute top-full left-0 mt-2 w-full z-10 flex gap-2">
-                      <QRDialog
-                        mode="generate"
-                        data={{
-                          cardId,
-                          questionId: question.id,
-                          userId,
-                          timestamp: Date.now(),
-                        }}
-                      />
-                      <QRDialog
-                        mode="scan"
-                        onScan={handleQuestionVerify}
-                      />
+                <div
+                  key={question.id}
+                  className={cn(
+                    "relative w-full aspect-square p-2 text-xs sm:text-sm md:text-base rounded-lg border transition-all",
+                    isCompleted
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "hover:bg-accent hover:text-accent-foreground",
+                    isInteractive && !loading && !isCompleted && "cursor-pointer"
+                  )}
+                  onClick={() => {
+                    if (isInteractive && !loading && !isCompleted) {
+                      handleQuestionClick(question)
+                    }
+                  }}
+                >
+                  {isCompleted && (
+                    <div className="absolute top-1 left-1">
+                      <Icons.check className="h-4 w-4" />
                     </div>
                   )}
+                  <div className="flex flex-col h-full">
+                    <div className="flex-1 flex items-center justify-center text-center">
+                      {question.text}
+                    </div>
+                    {question.matches && question.matches.length > 0 && (
+                      <div className="absolute bottom-1 right-1 flex flex-wrap justify-end gap-1">
+                        {question.matches.map((match) => (
+                          <TooltipProvider key={match.userId}>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Avatar className="h-6 w-6 border-2 border-background">
+                                  {match.user.avatarUrl ? (
+                                    <AvatarImage
+                                      src={match.user.avatarUrl}
+                                      alt={match.user.name}
+                                      referrerPolicy="no-referrer"
+                                    />
+                                  ) : (
+                                    <AvatarFallback>
+                                      {match.user.name.substring(0, 2).toUpperCase()}
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{match.user.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {match.surveyAnswers.map(a => a.answer).join(', ')}
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )
             })}
           </div>
         </CardContent>
       </Card>
+      {selectedQuestion && (
+        <QRDialog
+          mode="generate"
+          question={selectedQuestion}
+          data={{
+            cardId,
+            questionId: selectedQuestion.id,
+            userId,
+            timestamp: Date.now()
+          }}
+          onScan={onQuestionVerify}
+          onComplete={onQuestionClick}
+          open={isQRDialogOpen}
+          onOpenChange={setIsQRDialogOpen}
+        />
+      )}
     </div>
   )
 } 

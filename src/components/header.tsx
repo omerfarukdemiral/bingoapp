@@ -78,15 +78,15 @@ export function Header() {
                   className="relative h-10 w-10 rounded-full hover:bg-gray-100"
                 >
                   <Avatar className="h-10 w-10">
-                    {user.photoURL ? (
+                    {user.avatarUrl ? (
                       <AvatarImage
-                        src={user.photoURL}
-                        alt={user.displayName || ''}
+                        src={user.avatarUrl}
+                        alt={user.name}
                         referrerPolicy="no-referrer"
                       />
                     ) : (
                       <AvatarFallback className="bg-[#845EC2]/10 text-[#845EC2]">
-                        {getInitials(user.displayName || '')}
+                        {getInitials(user.name)}
                       </AvatarFallback>
                     )}
                   </Avatar>
@@ -95,7 +95,7 @@ export function Header() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.displayName}</p>
+                    <p className="text-sm font-medium leading-none">{user.name}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user.email}
                     </p>
