@@ -58,6 +58,7 @@ interface IEventService {
     verifiedByUserId: string;
   }): Promise<boolean>
   removeParticipant(eventId: string, userId: string): Promise<void>
+  resetCompletedTasks(eventId: string, userId: string): Promise<void>
 }
 
 const eventService: IEventService = {
@@ -109,16 +110,25 @@ const eventService: IEventService = {
       )
       
       const querySnapshot = await getDocs(q)
-      return querySnapshot.docs.map(doc => {
+      const events = await Promise.all(querySnapshot.docs.map(async doc => {
         const data = doc.data()
+        const creator = await userService.getUser(data.createdBy)
+        
         return {
           ...data,
           id: doc.id,
           startDate: data.startDate.toDate(),
           createdAt: data.createdAt.toDate(),
           updatedAt: data.updatedAt.toDate(),
+          creator: creator ? {
+            name: creator.name,
+            email: creator.email,
+            avatarUrl: creator.avatarUrl
+          } : null
         } as Event
-      })
+      }))
+      
+      return events
     } catch (error) {
       console.error('Etkinlikleri getirme hatası:', error)
       throw error
@@ -437,8 +447,10 @@ const eventService: IEventService = {
     }
   },
 
-  async completeQuestion(cardId, questionId, userId, verifiedByUserId) {
+  async completeQuestion(cardId: string, questionId: string, userId: string, verifiedByUserId: string) {
     try {
+      console.log('Görev tamamlama başladı:', { cardId, questionId, userId, verifiedByUserId })
+      
       const cardRef = doc(db, 'bingo_cards', cardId)
       const cardDoc = await getDoc(cardRef)
 
@@ -447,6 +459,8 @@ const eventService: IEventService = {
       }
 
       const card = cardDoc.data() as BingoCard
+      console.log('Mevcut kart durumu:', card)
+      
       const question = card.questions.find(q => q.id === questionId)
       
       if (!question) {
@@ -465,12 +479,17 @@ const eventService: IEventService = {
         verifiedBy: verifiedByUserId
       }
 
+      const updatedCompletedQuestions = [...(card.completedQuestions || []), completedQuestion]
+      console.log('Güncellenmiş tamamlanan görevler:', updatedCompletedQuestions)
+
       await updateDoc(cardRef, {
-        completedQuestions: [...card.completedQuestions, completedQuestion],
+        completedQuestions: updatedCompletedQuestions,
         updatedAt: Timestamp.now()
       })
+      
+      console.log('Görev başarıyla tamamlandı')
     } catch (error) {
-      console.error('Soru tamamlama hatası:', error)
+      console.error('Görev tamamlama hatası:', error)
       throw error
     }
   },
@@ -531,6 +550,34 @@ const eventService: IEventService = {
       })
     } catch (error) {
       console.error('Katılımcı silme hatası:', error)
+      throw error
+    }
+  },
+
+  async resetCompletedTasks(eventId: string, userId: string) {
+    try {
+      if (!await this.hasEventPermission(userId, eventId)) {
+        throw new Error('Bu işlem için yetkiniz bulunmamaktadır.')
+      }
+
+      // Etkinliğe ait tüm bingo kartlarını bul
+      const cardsQuery = query(
+        collection(db, 'bingo_cards'),
+        where('eventId', '==', eventId)
+      )
+      const cardsSnapshot = await getDocs(cardsQuery)
+
+      // Her kartın tamamlanan görevlerini sıfırla
+      const updatePromises = cardsSnapshot.docs.map(doc => 
+        updateDoc(doc.ref, {
+          completedQuestions: [],
+          updatedAt: Timestamp.now()
+        })
+      )
+
+      await Promise.all(updatePromises)
+    } catch (error) {
+      console.error('Tamamlanan görevleri sıfırlama hatası:', error)
       throw error
     }
   }

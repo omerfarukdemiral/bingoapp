@@ -95,15 +95,15 @@ export function BingoCard({
     <div className="relative">
       {showConfetti && <ReactConfetti />}
       <Card className="w-full max-w-4xl mx-auto">
-        <CardContent className="p-6">
-          <div className="grid grid-cols-5 gap-2">
+        <CardContent className="p-2 sm:p-4 md:p-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 portrait:grid-cols-3 landscape:grid-cols-5">
             {questions.map((question) => {
               const isCompleted = completedQuestions.some(q => q.id === question.id)
               return (
                 <div
                   key={question.id}
                   className={cn(
-                    "relative w-full aspect-square p-2 text-xs sm:text-sm md:text-base rounded-lg border transition-all",
+                    "relative w-full aspect-square p-2 sm:p-3 text-xs sm:text-sm md:text-base rounded-lg border transition-all",
                     isCompleted
                       ? "bg-primary text-primary-foreground border-primary"
                       : "hover:bg-accent hover:text-accent-foreground",
@@ -116,8 +116,8 @@ export function BingoCard({
                   }}
                 >
                   {isCompleted && (
-                    <div className="absolute top-1 left-1">
-                      <Icons.check className="h-4 w-4" />
+                    <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2">
+                      <Icons.check className="h-3 w-3 sm:h-4 sm:w-4 text-primary-foreground" />
                     </div>
                   )}
                   <div className="flex flex-col h-full">
@@ -125,12 +125,12 @@ export function BingoCard({
                       {question.text}
                     </div>
                     {question.matches && question.matches.length > 0 && (
-                      <div className="absolute bottom-1 right-1 flex flex-wrap justify-end gap-1">
-                        {question.matches.map((match) => (
+                      <div className="absolute bottom-1 right-1 flex flex-wrap justify-end gap-0.5 sm:gap-1">
+                        {question.matches.slice(0, 3).map((match) => (
                           <TooltipProvider key={match.userId}>
                             <Tooltip>
                               <TooltipTrigger>
-                                <Avatar className="h-6 w-6 border-2 border-background">
+                                <Avatar className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 border-2 border-background">
                                   {match.user.avatarUrl ? (
                                     <AvatarImage
                                       src={match.user.avatarUrl}
@@ -138,21 +138,31 @@ export function BingoCard({
                                       referrerPolicy="no-referrer"
                                     />
                                   ) : (
-                                    <AvatarFallback>
+                                    <AvatarFallback className="text-[8px] sm:text-[10px] md:text-xs">
                                       {match.user.name.substring(0, 2).toUpperCase()}
                                     </AvatarFallback>
                                   )}
                                 </Avatar>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>{match.user.name}</p>
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs sm:text-sm">{match.user.name}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground">
                                   {match.surveyAnswers.map(a => a.answer).join(', ')}
                                 </p>
+                                {question.matches && question.matches.length > 3 && (
+                                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                                    +{question.matches.length - 3} kişi daha
+                                  </p>
+                                )}
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
                         ))}
+                        {question.matches.length > 3 && (
+                          <div className="flex items-center justify-center h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 rounded-full bg-muted text-[8px] sm:text-[10px] md:text-xs">
+                            +{question.matches.length - 3}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

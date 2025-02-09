@@ -49,17 +49,17 @@ export function EventParticipantsList({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Katılımcılar ({participants.length})</CardTitle>
+        <CardTitle className="text-lg sm:text-xl">Katılımcılar ({participants.length})</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {participants.map((participant) => (
             <div
               key={participant.id}
               className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50"
             >
-              <div className="flex items-center gap-3">
-                <Avatar>
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
                   {participant.user.avatarUrl ? (
                     <AvatarImage
                       src={participant.user.avatarUrl}
@@ -67,17 +67,19 @@ export function EventParticipantsList({
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <AvatarFallback>
+                    <AvatarFallback className="text-xs sm:text-sm">
                       {getInitials(participant.user.name)}
                     </AvatarFallback>
                   )}
                 </Avatar>
-                <div>
-                  <p className="font-medium">{participant.user.name}</p>
-                  <p className="text-sm text-muted-foreground">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm sm:text-base truncate">
+                    {participant.user.name}
+                  </p>
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">
                     {participant.user.email}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
                     {participant.points} puan
                   </p>
                 </div>
@@ -86,14 +88,14 @@ export function EventParticipantsList({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10 ml-2 h-8 w-8 sm:h-9 sm:w-9"
                   onClick={() => handleRemoveParticipant(participant.id, participant.userId)}
                   disabled={loading === participant.id}
                 >
                   {loading === participant.id ? (
-                    <Icons.spinner className="h-4 w-4 animate-spin" />
+                    <Icons.spinner className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                   ) : (
-                    <Icons.trash className="h-4 w-4" />
+                    <Icons.trash className="h-3 w-3 sm:h-4 sm:w-4" />
                   )}
                 </Button>
               )}
@@ -101,7 +103,7 @@ export function EventParticipantsList({
           ))}
 
           {participants.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-6 sm:py-8 text-sm sm:text-base text-muted-foreground">
               Henüz katılımcı bulunmuyor.
             </div>
           )}

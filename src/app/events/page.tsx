@@ -13,6 +13,7 @@ import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 
 export default function EventsPage() {
   const { user } = useAuth()
@@ -39,12 +40,12 @@ export default function EventsPage() {
   }, [])
 
   return (
-    <div className="container max-w-4xl py-10">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Etkinlikler</h1>
+    <div className="container max-w-4xl py-6 sm:py-10 px-4 sm:px-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold">Etkinlikler</h1>
         {user && (
           <Link href="/events/create">
-            <Button>
+            <Button className="w-full sm:w-auto">
               <Icons.plus className="mr-2 h-4 w-4" />
               Yeni Etkinlik
             </Button>
@@ -67,7 +68,7 @@ export default function EventsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6">
+        <div className="grid gap-4 sm:gap-6">
           {events.map((event) => (
             <Link key={event.id} href={`/events/${event.id}`}>
               <motion.div
@@ -76,24 +77,52 @@ export default function EventsPage() {
               >
                 <Card className="card-hover bg-gradient-to-br from-purple-50 via-white to-green-50">
                   <CardHeader>
-                    <div className="flex justify-between items-start">
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                       <div>
-                        <CardTitle className="text-xl text-secondary">
+                        <CardTitle className="text-lg sm:text-xl text-secondary">
                           {event.name}
                         </CardTitle>
-                        <CardDescription className="mt-2">
+                        <CardDescription className="mt-2 text-sm">
                           {event.description}
                         </CardDescription>
-                        <div className="mt-2 text-sm text-muted-foreground">
-                          Oluşturan: {event.createdBy === user?.id ? 'Siz' : 'Başka bir kullanıcı'}
+                        <div className="mt-2 flex items-center gap-2">
+                          {event.creator ? (
+                            <>
+                              <Avatar className="h-6 w-6 sm:h-8 sm:w-8">
+                                {event.creator.avatarUrl ? (
+                                  <AvatarImage
+                                    src={event.creator.avatarUrl}
+                                    alt={event.creator.name}
+                                    referrerPolicy="no-referrer"
+                                  />
+                                ) : (
+                                  <AvatarFallback className="text-[10px] sm:text-xs">
+                                    {event.creator.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                  </AvatarFallback>
+                                )}
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="text-xs sm:text-sm font-medium truncate">
+                                  {event.creator.name}
+                                </p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                                  {event.creator.email}
+                                </p>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-xs sm:text-sm text-muted-foreground">
+                              Oluşturan bilgisi bulunamadı
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <div className="text-sm text-primary">
+                      <div className="flex flex-row sm:flex-col items-start sm:items-end gap-2 w-full sm:w-auto">
+                        <div className="text-xs sm:text-sm text-primary">
                           {format(event.startDate, 'dd MMMM yyyy HH:mm', { locale: tr })}
                         </div>
                         {event.createdBy === user?.id && (
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 ml-auto sm:ml-0">
                             <Button
                               variant="outline"
                               size="sm"
@@ -128,7 +157,7 @@ export default function EventsPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs sm:text-sm text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <Icons.users className="h-4 w-4 text-primary" />
                         <span>

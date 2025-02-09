@@ -163,21 +163,34 @@ export default function EventPage() {
   }) => {
     if (!user) return
     setCompleting(true)
+    console.log('QR Doğrulama başladı:', data)
 
     try {
       const isValid = await eventService.verifyQRCode({
         ...data,
         verifiedByUserId: user.id
       })
+      console.log('QR Kod geçerli mi:', isValid)
+      
       if (!isValid) {
         toast.error('Geçersiz QR kod')
         return
       }
 
       await eventService.completeQuestion(data.cardId, data.questionId, data.userId, user.id)
+      console.log('Görev tamamlama başarılı')
+      
+      // Kartı direkt olarak yükleyelim
+      const updatedCard = await eventService.getBingoCard(data.cardId)
+      console.log('Güncel kart durumu:', updatedCard)
+      if (updatedCard) {
+        setBingoCard(updatedCard)
+      }
+      
       await loadEvent()
       toast.success('Görev doğrulandı!')
     } catch (error) {
+      console.error('Görev doğrulama hatası:', error)
       toast.error('Görev doğrulanırken bir hata oluştu')
     } finally {
       setCompleting(false)
@@ -186,7 +199,7 @@ export default function EventPage() {
 
   if (loading) {
     return (
-      <div className="container max-w-4xl py-10">
+      <div className="container max-w-4xl py-6 sm:py-10 px-4 sm:px-6">
         <div className="flex items-center justify-center">
           <div className="animate-pulse text-lg">Yükleniyor...</div>
         </div>
@@ -196,27 +209,31 @@ export default function EventPage() {
 
   if (error || !event) {
     return (
-      <div className="container max-w-4xl py-10">
+      <div className="container max-w-4xl py-6 sm:py-10 px-4 sm:px-6">
         <div className="text-center text-red-500">{error}</div>
       </div>
     )
   }
 
   return (
-    <div className="container max-w-4xl py-10 space-y-8">
+    <div className="container max-w-4xl py-6 sm:py-10 px-4 sm:px-6 space-y-6 sm:space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>{event.name}</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl">{event.name}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="mb-4">{event.description}</p>
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div>
-              {event.currentParticipants} / {event.maxParticipants} Katılımcı
+          <p className="mb-4 text-sm sm:text-base">{event.description}</p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs sm:text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Icons.users className="h-4 w-4 text-primary" />
+              <span>
+                {event.currentParticipants} / {event.maxParticipants} Katılımcı
+              </span>
             </div>
             {event.isTimeboxed && (
-              <div>
-                Süre: {event.duration} dakika
+              <div className="flex items-center gap-2">
+                <Icons.clock className="h-4 w-4 text-secondary" />
+                <span>Süre: {event.duration} dakika</span>
               </div>
             )}
           </div>
@@ -227,15 +244,19 @@ export default function EventPage() {
         bingoCard ? (
           <>
             {!loading && (
-              <BingoCard
-                cardId={bingoCard.id}
-                userId={user.id}
-                questions={bingoCard.questions}
-                completedQuestions={bingoCard.completedQuestions}
-                onQuestionClick={handleQuestionComplete}
-                onQuestionVerify={handleQuestionVerify}
-                loading={completing}
-              />
+              <div className="overflow-x-auto -mx-4 sm:mx-0">
+                <div className="min-w-[320px] px-4 sm:px-0">
+                  <BingoCard
+                    cardId={bingoCard.id}
+                    userId={user.id}
+                    questions={bingoCard.questions}
+                    completedQuestions={bingoCard.completedQuestions}
+                    onQuestionClick={handleQuestionComplete}
+                    onQuestionVerify={handleQuestionVerify}
+                    loading={completing}
+                  />
+                </div>
+              </div>
             )}
             <EventParticipantsList
               eventId={eventId}
@@ -249,11 +270,8 @@ export default function EventPage() {
             {participants.some(p => p.userId === user.id) ? (
               <Card>
                 <CardContent className="py-8">
-                  <div className="text-center space-y-4">
-                    <Icons.spinner className="h-8 w-8 animate-spin mx-auto" />
-                    <p className="text-muted-foreground">
-                      Bingo kartınız yükleniyor...
-                    </p>
+                  <div className="text-center text-muted-foreground text-sm sm:text-base">
+                    Bingo kartınız hazırlanıyor...
                   </div>
                 </CardContent>
               </Card>
@@ -264,24 +282,13 @@ export default function EventPage() {
                 loading={joining}
               />
             )}
-            <EventParticipantsList
-              eventId={eventId}
-              participants={participants}
-              isAdmin={event.adminId === user.id}
-              onParticipantRemove={loadParticipants}
-            />
           </>
         )
       ) : (
         <Card>
           <CardContent className="py-8">
-            <div className="text-center">
-              <p className="mb-4 text-muted-foreground">
-                Etkinliğe katılmak için giriş yapmalısınız.
-              </p>
-              <Button onClick={() => router.push('/login')}>
-                Giriş Yap
-              </Button>
+            <div className="text-center text-muted-foreground text-sm sm:text-base">
+              Etkinliğe katılmak için giriş yapmalısınız.
             </div>
           </CardContent>
         </Card>

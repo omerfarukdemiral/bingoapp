@@ -88,28 +88,28 @@ export function QRDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Görev Detayı</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Görev Detayı</DialogTitle>
           {question && (
-            <DialogDescription className="text-base font-medium text-foreground">
+            <DialogDescription className="text-sm sm:text-base font-medium text-foreground">
               {question.text}
             </DialogDescription>
           )}
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Eşleşen Kullanıcılar */}
           {question?.matches && question.matches.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="text-sm font-medium">Bu görev için eşleşen kişiler:</h4>
-              <p className="text-xs text-muted-foreground">
+            <div className="space-y-2 sm:space-y-3">
+              <h4 className="text-xs sm:text-sm font-medium">Bu görev için eşleşen kişiler:</h4>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">
                 Bu kişilerden birinin QR kodunu okutarak görevi tamamlayabilirsiniz.
               </p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {question.matches.map((match: BingoCardMatch) => (
                   <div key={match.userId} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
-                    <Avatar className="h-8 w-8">
+                    <Avatar className="h-6 w-6 sm:h-8 sm:w-8">
                       {match.user.avatarUrl ? (
                         <AvatarImage
                           src={match.user.avatarUrl}
@@ -117,14 +117,14 @@ export function QRDialog({
                           referrerPolicy="no-referrer"
                         />
                       ) : (
-                        <AvatarFallback>
+                        <AvatarFallback className="text-xs sm:text-sm">
                           {getInitials(match.user.name)}
                         </AvatarFallback>
                       )}
                     </Avatar>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{match.user.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{match.user.email}</p>
+                      <p className="text-xs sm:text-sm font-medium truncate">{match.user.name}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{match.user.email}</p>
                     </div>
                   </div>
                 ))}
@@ -133,22 +133,24 @@ export function QRDialog({
           )}
 
           {/* Görev Tamamlama Seçenekleri */}
-          <div className="flex flex-col gap-3">
-            <h4 className="text-sm font-medium">Görevi nasıl tamamlamak istersiniz?</h4>
-            <div className="flex gap-3">
+          <div className="flex flex-col gap-2 sm:gap-3">
+            <h4 className="text-xs sm:text-sm font-medium">Görevi nasıl tamamlamak istersiniz?</h4>
+            <div className="flex gap-2 sm:gap-3">
               {mode === 'generate' ? (
-                <div className="w-full flex flex-col items-center gap-4">
+                <div className="w-full flex flex-col items-center gap-3 sm:gap-4">
                   {canShowQR ? (
                     <>
-                      <QRCode value={JSON.stringify(data)} size={256} />
+                      <div className="w-full max-w-[200px] sm:max-w-[256px]">
+                        <QRCode value={JSON.stringify(data)} size={256} style={{ width: '100%', height: 'auto' }} />
+                      </div>
                       <Button onClick={handleScanClick} className="w-full">
-                        <Icons.scan className="mr-2 h-4 w-4" />
+                        <Icons.scan className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                         QR Kod Tara
                       </Button>
                     </>
                   ) : (
                     <Button onClick={handleScanClick} className="w-full">
-                      <Icons.scan className="mr-2 h-4 w-4" />
+                      <Icons.scan className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                       QR Kod Tara
                     </Button>
                   )}
@@ -157,17 +159,17 @@ export function QRDialog({
                 <>
                   <Button
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 text-xs sm:text-sm"
                     onClick={handleScanClick}
                   >
-                    <Icons.scan className="mr-2 h-4 w-4" />
+                    <Icons.scan className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                     QR Kod Tara
                   </Button>
                   <Button
-                    className="flex-1"
+                    className="flex-1 text-xs sm:text-sm"
                     onClick={handleComplete}
                   >
-                    <Icons.check className="mr-2 h-4 w-4" />
+                    <Icons.check className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                     Tamamlandı
                   </Button>
                 </>
@@ -176,7 +178,7 @@ export function QRDialog({
           </div>
 
           {error && (
-            <div className="text-sm text-red-500">
+            <div className="text-xs sm:text-sm text-red-500">
               {error}
             </div>
           )}

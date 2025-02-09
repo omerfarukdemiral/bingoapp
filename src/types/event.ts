@@ -64,6 +64,11 @@ export interface Event {
   templateId: string
   surveyQuestions: SurveyQuestion[]
   bingoTasks: BingoTask[]
+  creator?: {
+    name: string
+    email: string
+    avatarUrl?: string
+  } | null
 }
 
 export interface EventParticipant {

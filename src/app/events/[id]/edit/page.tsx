@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/context/auth.context'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,41 +14,45 @@ import { eventService } from '@/services/event.service'
 import { toast } from 'sonner'
 import type { Event } from '@/types/event'
 
-export default function EditEventPage({ params }: { params: { id: string } }) {
+export default function EditEventPage() {
+  const params = useParams()
+  const eventId = params?.id as string
   const router = useRouter()
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [event, setEvent] = useState<Event | null>(null)
   const [isTimeboxed, setIsTimeboxed] = useState(false)
+  const [updating, setUpdating] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   useEffect(() => {
-    const loadEvent = async () => {
-      try {
-        const eventData = await eventService.getEvent(params.id)
-        if (!eventData) {
-          setError('Etkinlik bulunamadı')
-          return
-        }
+    if (!eventId) return
+    loadEvent()
+  }, [eventId])
 
-        if (eventData.createdBy !== user?.id) {
-          router.push('/events')
-          return
-        }
-
-        setEvent(eventData)
-        setIsTimeboxed(eventData.isTimeboxed)
-      } catch (error) {
-        setError('Etkinlik yüklenirken bir hata oluştu')
-      } finally {
-        setLoading(false)
+  const loadEvent = async () => {
+    try {
+      const eventData = await eventService.getEvent(eventId)
+      if (!eventData) {
+        setError('Etkinlik bulunamadı')
+        return
       }
-    }
 
-    if (user) {
-      loadEvent()
+      if (eventData.createdBy !== user?.id) {
+        router.push('/events')
+        return
+      }
+
+      setEvent(eventData)
+      setIsTimeboxed(eventData.isTimeboxed)
+    } catch (error) {
+      console.error('Etkinlik yükleme hatası:', error)
+      setError('Etkinlik yüklenirken bir hata oluştu')
+    } finally {
+      setLoading(false)
     }
-  }, [params.id, user, router])
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -80,6 +84,40 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
       setError('Etkinlik güncellenirken bir hata oluştu')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleStatusChange = async (isActive: boolean) => {
+    if (!user || !event) return
+    setUpdating(true)
+
+    try {
+      await eventService.updateEventStatus(event.id, user.id, isActive)
+      await loadEvent()
+      toast.success(isActive ? 'Etkinlik aktif edildi' : 'Etkinlik tamamlandı olarak işaretlendi')
+    } catch (error) {
+      toast.error('Etkinlik durumu güncellenirken bir hata oluştu')
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleResetTasks = async () => {
+    if (!user || !event) return
+    
+    if (!window.confirm('Tüm katılımcıların tamamladığı görevler sıfırlanacak. Bu işlemi onaylıyor musunuz?')) {
+      return
+    }
+
+    setResetting(true)
+
+    try {
+      await eventService.resetCompletedTasks(event.id, user.id)
+      toast.success('Tüm tamamlanan görevler sıfırlandı')
+    } catch (error) {
+      toast.error('Görevler sıfırlanırken bir hata oluştu')
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -217,6 +255,60 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
               </Button>
             </div>
           </form>
+        </CardContent>
+      </Card>
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle className="text-xl sm:text-2xl">Etkinlik Durumu</CardTitle>
+          <CardDescription className="text-sm sm:text-base">
+            {event.name}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              variant={event.status === 'active' ? 'destructive' : 'default'}
+              onClick={() => handleStatusChange(!event.status.includes('active'))}
+              disabled={updating}
+              className="w-full sm:w-auto"
+            >
+              {updating ? (
+                <>
+                  <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                  Güncelleniyor...
+                </>
+              ) : event.status === 'active' ? (
+                <>
+                  <Icons.check className="mr-2 h-4 w-4" />
+                  Etkinliği Tamamla
+                </>
+              ) : (
+                <>
+                  <Icons.refresh className="mr-2 h-4 w-4" />
+                  Etkinliği Aktif Et
+                </>
+              )}
+            </Button>
+
+            <Button
+              variant="destructive"
+              onClick={handleResetTasks}
+              disabled={resetting}
+              className="w-full sm:w-auto"
+            >
+              {resetting ? (
+                <>
+                  <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                  Sıfırlanıyor...
+                </>
+              ) : (
+                <>
+                  <Icons.refresh className="mr-2 h-4 w-4" />
+                  Tamamlanan Görevleri Sıfırla
+                </>
+              )}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
