@@ -103,10 +103,10 @@ export function BingoCard({
                 <div
                   key={question.id}
                   className={cn(
-                    "relative w-full aspect-square p-2 sm:p-3 text-xs sm:text-sm md:text-base rounded-lg border transition-all",
+                    "relative w-full aspect-square p-2 sm:p-3 text-xs sm:text-sm md:text-base rounded-lg transition-all duration-300",
                     isCompleted
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "hover:bg-accent hover:text-accent-foreground",
+                      ? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground border-2 border-primary shadow-lg shadow-primary/20 scale-[1.02]"
+                      : "hover:bg-gradient-to-br hover:from-muted hover:to-background hover:scale-[1.02] hover:shadow-lg bg-white border-2 border-border/90 hover:border-primary",
                     isInteractive && !loading && !isCompleted && "cursor-pointer"
                   )}
                   onClick={() => {
@@ -130,7 +130,7 @@ export function BingoCard({
                           <TooltipProvider key={match.userId}>
                             <Tooltip>
                               <TooltipTrigger>
-                                <Avatar className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 border-2 border-background">
+                                <Avatar className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 ring-2 ring-background shadow-md">
                                   {match.user.avatarUrl ? (
                                     <AvatarImage
                                       src={match.user.avatarUrl}
@@ -138,14 +138,14 @@ export function BingoCard({
                                       referrerPolicy="no-referrer"
                                     />
                                   ) : (
-                                    <AvatarFallback className="text-[8px] sm:text-[10px] md:text-xs">
+                                    <AvatarFallback className="text-[8px] sm:text-[10px] md:text-xs bg-gradient-to-br from-primary/20 to-background">
                                       {match.user.name.substring(0, 2).toUpperCase()}
                                     </AvatarFallback>
                                   )}
                                 </Avatar>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p className="text-xs sm:text-sm">{match.user.name}</p>
+                                <p className="text-xs sm:text-sm font-medium">{match.user.name}</p>
                                 <p className="text-[10px] sm:text-xs text-muted-foreground">
                                   {match.surveyAnswers.map(a => a.answer).join(', ')}
                                 </p>
@@ -159,7 +159,7 @@ export function BingoCard({
                           </TooltipProvider>
                         ))}
                         {question.matches.length > 3 && (
-                          <div className="flex items-center justify-center h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 rounded-full bg-muted text-[8px] sm:text-[10px] md:text-xs">
+                          <div className="flex items-center justify-center h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 rounded-full bg-primary/10 text-[8px] sm:text-[10px] md:text-xs ring-2 ring-background shadow-md">
                             +{question.matches.length - 3}
                           </div>
                         )}

@@ -25,7 +25,6 @@ export default function EventsPage() {
   const loadEvents = async () => {
     try {
       const events = await eventService.getActiveEvents()
-      console.log('Yüklenen etkinlikler:', events)
       setEvents(events)
     } catch (error) {
       console.error('Etkinlik yükleme hatası:', error)
@@ -40,136 +39,135 @@ export default function EventsPage() {
   }, [])
 
   return (
-    <div className="container max-w-4xl py-6 sm:py-10 px-4 sm:px-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold">Etkinlikler</h1>
+    <div className="container max-w-7xl mx-auto py-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+        <div>
+          <h1 className="text-4xl font-bold mb-2 text-foreground">
+            Etkinlikler
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Aktif etkinliklere katılabilir veya yeni etkinlik oluşturabilirsiniz.
+          </p>
+        </div>
         {user && (
-          <Link href="/events/create">
-            <Button className="w-full sm:w-auto">
-              <Icons.plus className="mr-2 h-4 w-4" />
+          <Button size="lg" asChild className="w-full sm:w-auto text-lg h-12">
+            <Link href="/events/create">
+              <Icons.plus className="mr-2 h-5 w-5" />
               Yeni Etkinlik
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         )}
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center">
-          <Icons.spinner className="h-8 w-8 animate-spin" />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Icons.spinner className="h-12 w-12 animate-spin text-primary" />
         </div>
       ) : error ? (
-        <div className="text-center text-red-500">{error}</div>
+        <Card className="border-destructive">
+          <CardContent className="py-12">
+            <div className="text-center text-lg text-destructive">{error}</div>
+          </CardContent>
+        </Card>
       ) : events.length === 0 ? (
         <Card>
-          <CardContent className="py-8">
-            <div className="text-center text-muted-foreground">
-              Henüz aktif etkinlik bulunmuyor.
+          <CardContent className="py-16">
+            <div className="text-center">
+              <Icons.calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-medium mb-2">Henüz aktif etkinlik bulunmuyor</h3>
+              <p className="text-muted-foreground text-lg mb-6">
+                Yeni bir etkinlik oluşturarak başlayabilirsiniz.
+              </p>
+              {user && (
+                <Button size="lg" asChild className="text-lg h-12">
+                  <Link href="/events/create">
+                    <Icons.plus className="mr-2 h-5 w-5" />
+                    Yeni Etkinlik Oluştur
+                  </Link>
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:gap-6">
+        <div className="grid gap-8 sm:grid-cols-2">
           {events.map((event) => (
             <Link key={event.id} href={`/events/${event.id}`}>
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                className="h-full"
               >
-                <Card className="card-hover bg-gradient-to-br from-purple-50 via-white to-green-50">
-                  <CardHeader>
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                      <div>
-                        <CardTitle className="text-lg sm:text-xl text-secondary">
-                          {event.name}
-                        </CardTitle>
-                        <CardDescription className="mt-2 text-sm">
-                          {event.description}
-                        </CardDescription>
-                        <div className="mt-2 flex items-center gap-2">
-                          {event.creator ? (
-                            <>
-                              <Avatar className="h-6 w-6 sm:h-8 sm:w-8">
-                                {event.creator.avatarUrl ? (
-                                  <AvatarImage
-                                    src={event.creator.avatarUrl}
-                                    alt={event.creator.name}
-                                    referrerPolicy="no-referrer"
-                                  />
-                                ) : (
-                                  <AvatarFallback className="text-[10px] sm:text-xs">
-                                    {event.creator.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                                  </AvatarFallback>
-                                )}
-                              </Avatar>
-                              <div className="min-w-0">
-                                <p className="text-xs sm:text-sm font-medium truncate">
-                                  {event.creator.name}
-                                </p>
-                                <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                                  {event.creator.email}
-                                </p>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="text-xs sm:text-sm text-muted-foreground">
-                              Oluşturan bilgisi bulunamadı
-                            </div>
-                          )}
+                <Card className="group h-full relative overflow-hidden bg-card hover:shadow-2xl hover:shadow-primary/20 transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all duration-500" />
+                  <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-secondary/5 rounded-full blur-3xl group-hover:bg-secondary/10 transition-all duration-500" />
+                  
+                  <CardHeader className="pb-4 relative">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1.5">
+                          <CardTitle className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
+                            {event.name}
+                          </CardTitle>
+                          <CardDescription className="text-base line-clamp-2">
+                            {event.description}
+                          </CardDescription>
                         </div>
+                        {event.creator && (
+                          <Avatar className="h-12 w-12 ring-2 ring-background shadow-xl">
+                            {event.creator.avatarUrl ? (
+                              <AvatarImage
+                                src={event.creator.avatarUrl}
+                                alt={event.creator.name}
+                                referrerPolicy="no-referrer"
+                                className="object-cover"
+                              />
+                            ) : (
+                              <AvatarFallback className="text-lg bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
+                                {event.creator.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                        )}
                       </div>
-                      <div className="flex flex-row sm:flex-col items-start sm:items-end gap-2 w-full sm:w-auto">
-                        <div className="text-xs sm:text-sm text-primary">
-                          {format(event.startDate, 'dd MMMM yyyy HH:mm', { locale: tr })}
+                      {event.creator && (
+                        <div className="flex flex-col text-sm">
+                          <span className="font-medium text-foreground/90">{event.creator.name}</span>
+                          <span className="text-muted-foreground truncate">{event.creator.email}</span>
                         </div>
-                        {event.createdBy === user?.id && (
-                          <div className="flex gap-2 ml-auto sm:ml-0">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.preventDefault()
-                                router.push(`/events/${event.id}/edit`)
-                              }}
-                            >
-                              <Icons.settings className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={async (e) => {
-                                e.preventDefault()
-                                if (window.confirm('Bu etkinliği silmek istediğinize emin misiniz?')) {
-                                  try {
-                                    await eventService.removeEvent(event.id, user.id)
-                                    toast.success('Etkinlik başarıyla silindi')
-                                    loadEvents()
-                                  } catch (error) {
-                                    toast.error('Etkinlik silinirken bir hata oluştu')
-                                  }
-                                }
-                              }}
-                            >
-                              <Icons.trash className="h-4 w-4" />
-                            </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="relative">
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-6 text-base">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2 rounded-full bg-primary/10 text-primary">
+                            <Icons.users className="h-5 w-5" />
+                          </div>
+                          <span className="font-medium text-foreground">
+                            {event.currentParticipants} / {event.maxParticipants}
+                          </span>
+                        </div>
+                        {event.isTimeboxed && event.duration && (
+                          <div className="flex items-center gap-2">
+                            <div className="p-2 rounded-full bg-secondary/10 text-secondary-foreground">
+                              <Icons.clock className="h-5 w-5" />
+                            </div>
+                            <span className="text-muted-foreground">{event.duration} dakika</span>
                           </div>
                         )}
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs sm:text-sm text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <Icons.users className="h-4 w-4 text-primary" />
-                        <span>
-                          {event.currentParticipants} / {event.maxParticipants} Katılımcı
+                      <div className="flex items-center gap-2 text-base">
+                        <div className="p-2 rounded-full bg-primary/10 text-primary">
+                          <Icons.calendar className="h-5 w-5" />
+                        </div>
+                        <span className="text-muted-foreground">
+                          {format(event.startDate, 'dd MMMM yyyy HH:mm', { locale: tr })}
                         </span>
                       </div>
-                      {event.isTimeboxed && event.duration && (
-                        <div className="flex items-center gap-2">
-                          <Icons.clock className="h-4 w-4 text-secondary" />
-                          <span>Süre: {event.duration} dakika</span>
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>

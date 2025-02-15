@@ -4,142 +4,65 @@
  
 @layer base {
   :root {
-    /* Koyu arka plan için açık renkler */
-    --background: 264 30% 98%;
-    --foreground: 264 10% 10%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
  
-    /* Kartlar için hafif tonlar */
-    --card: 264 25% 99%;
-    --card-foreground: 264 10% 10%;
+    --card: 0 0% 98%;
+    --card-foreground: 222.2 84% 4.9%;
  
-    /* Menü ve dropdown için */
-    --popover: 264 25% 99%;
-    --popover-foreground: 264 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
  
-    /* Ana renkler */
-    --primary: 264 50% 57%;    /* #845EC2 */
-    --primary-foreground: 0 0% 100%;
+    --primary: 248 90% 66%;
+    --primary-foreground: 210 40% 98%;
  
-    --secondary: 315 60% 60%;  /* #D65DB1 */
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
  
-    --accent: 348 100% 72%;    /* #FF6F91 */
-    --accent-foreground: 0 0% 100%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
  
-    /* Metin renkleri */
-    --muted: 264 20% 90%;
-    --muted-foreground: 264 10% 40%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
  
-    --destructive: 0 100% 40%;
-    --destructive-foreground: 0 100% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
  
-    --border: 264 20% 85%;
-    --input: 264 20% 85%;
-    --ring: 264 50% 57%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 248 90% 66%;
  
-    --radius: 0.75rem;
+    --radius: 0.5rem;
   }
  
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 210 20% 98%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
  
-    --card: 240 10% 3.9%;
-    --card-foreground: 210 20% 98%;
+    --card: 217.2 32.6% 7.5%;
+    --card-foreground: 210 40% 98%;
  
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 210 20% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
  
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 20% 98%;
+    --primary: 248 90% 66%;
+    --primary-foreground: 210 40% 98%;
  
-    --secondary: 327.4 73.6% 60.6%;
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
  
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
  
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 210 20% 98%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
  
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive-foreground: 210 40% 98%;
  
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 262.1 83.3% 57.8%;
-  }
-}
-
-@layer components {
-  .gradient-bg {
-    @apply bg-gradient-to-br from-primary/10 via-secondary/10 to-primary/5;
-  }
-
-  .gradient-text {
-    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
-  }
-
-  .card-hover {
-    @apply transition-all duration-300 hover:scale-[1.02]
-           bg-white/95 backdrop-blur-sm border-[#845EC2]/10
-           hover:shadow-lg hover:shadow-[#845EC2]/10;
-  }
-
-  .nav-link {
-    @apply relative px-4 py-2 text-gray-800 hover:text-[#845EC2] transition-colors;
-  }
-
-  .nav-link::after {
-    @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 
-           bg-[#F9F871] transition-all duration-300;
-  }
-
-  .nav-link:hover::after {
-    @apply w-full;
-  }
-
-  .bingo-card {
-    @apply bg-gradient-to-br from-[#845EC2]/20 via-white to-[#FF6F91]/20 
-           rounded-xl shadow-lg p-6;
-  }
-
-  .bingo-cell {
-    @apply bg-white/90 backdrop-blur-sm rounded-lg p-4 transition-all duration-300 
-           hover:shadow-md hover:scale-[1.02] cursor-pointer
-           border border-[#D65DB1]/20;
-  }
-
-  .bingo-cell.completed {
-    @apply bg-[#F9F871]/20 border-[#F9F871]/50;
-  }
-
-  .button-primary {
-    @apply bg-[#845EC2] hover:bg-[#845EC2]/90 text-white
-           shadow-md shadow-[#845EC2]/20
-           transition-all duration-300 transform hover:scale-105;
-  }
-
-  .button-secondary {
-    @apply bg-[#D65DB1] hover:bg-[#D65DB1]/90 text-white
-           shadow-md shadow-[#D65DB1]/20
-           transition-all duration-300 transform hover:scale-105;
-  }
-
-  .section-padding {
-    @apply py-12 md:py-20;
-  }
-
-  .container-padding {
-    @apply px-4 md:px-6;
-  }
-
-  .header-gradient {
-    @apply bg-gradient-to-r from-[#845EC2] to-[#D65DB1];
-  }
-
-  .header-content {
-    @apply text-white font-semibold text-lg;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 248 90% 66%;
   }
 }
 
@@ -148,9 +71,28 @@
     @apply border-border;
   }
   body {
-    @apply bg-gradient-to-br from-[#845EC2] via-[#D65DB1] to-[#FF6F91] min-h-screen;
+    @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+  h1 {
+    @apply text-2xl font-semibold;
+  }
+  h2 {
+    @apply text-xl font-semibold;
+  }
+  h3 {
+    @apply text-lg font-semibold;
+  }
+  p {
+    @apply text-base;
+  }
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
 }
 
 /* Kartlar için gradient */
@@ -162,18 +104,19 @@
 /* Hover efektli kartlar */
 .card-hover {
   @apply transition-all duration-300 hover:scale-[1.02]
-         bg-white/95 backdrop-blur-sm border-[#845EC2]/10
-         hover:shadow-lg hover:shadow-[#845EC2]/10;
+         bg-card text-card-foreground
+         border border-border/50
+         hover:shadow-lg hover:shadow-primary/10;
 }
 
 /* Navbar için özel stiller */
 .nav-link {
-  @apply relative px-4 py-2 text-gray-800 hover:text-[#845EC2] transition-colors;
+  @apply relative px-4 py-2 text-foreground hover:text-primary transition-colors;
 }
 
 .nav-link::after {
   @apply content-[''] absolute bottom-0 left-0 w-0 h-0.5 
-         bg-[#F9F871] transition-all duration-300;
+         bg-primary transition-all duration-300;
 }
 
 .nav-link:hover::after {
@@ -182,30 +125,32 @@
 
 /* Bingo kartları için özel stiller */
 .bingo-card {
-  @apply bg-gradient-to-br from-[#845EC2]/20 via-white to-[#FF6F91]/20 
-         rounded-xl shadow-lg p-6;
+  @apply bg-card text-card-foreground
+         rounded-xl shadow-lg p-6
+         border border-border/50;
 }
 
 .bingo-cell {
-  @apply bg-white/90 backdrop-blur-sm rounded-lg p-4 transition-all duration-300 
+  @apply bg-background/50 backdrop-blur-sm rounded-lg p-4 
+         transition-all duration-300 
          hover:shadow-md hover:scale-[1.02] cursor-pointer
-         border border-[#D65DB1]/20;
+         border border-border/50;
 }
 
 .bingo-cell.completed {
-  @apply bg-[#F9F871]/20 border-[#F9F871]/50;
+  @apply bg-primary/20 border-primary/50;
 }
 
 /* Animasyonlu butonlar */
 .button-primary {
-  @apply bg-[#845EC2] hover:bg-[#845EC2]/90 text-white
-         shadow-md shadow-[#845EC2]/20
+  @apply bg-primary hover:bg-primary/90 text-primary-foreground
+         shadow-md shadow-primary/20
          transition-all duration-300 transform hover:scale-105;
 }
 
 .button-secondary {
-  @apply bg-[#D65DB1] hover:bg-[#D65DB1]/90 text-white
-         shadow-md shadow-[#D65DB1]/20
+  @apply bg-secondary hover:bg-secondary/90 text-secondary-foreground
+         shadow-md shadow-secondary/20
          transition-all duration-300 transform hover:scale-105;
 }
 
@@ -216,4 +161,29 @@
 
 .header-content {
   @apply text-white font-semibold text-lg;
+}
+
+@layer components {
+  .gradient-bg {
+    @apply bg-gradient-to-br from-primary/10 via-secondary/10 to-primary/5;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+  }
+
+  .section-padding {
+    @apply py-12 md:py-20;
+  }
+
+  .container-padding {
+    @apply px-4 md:px-6;
+  }
+
+  /* Grid pattern background */
+  .bg-grid-16 {
+    background-size: 16px 16px;
+    background-image: linear-gradient(to right, hsl(var(--primary)/0.1) 1px, transparent 1px),
+                      linear-gradient(to bottom, hsl(var(--primary)/0.1) 1px, transparent 1px);
+  }
 } 

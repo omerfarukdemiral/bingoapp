@@ -15,6 +15,7 @@ import { eventService } from '@/services/event.service'
 import { templates } from '@/config/templates'
 import type { Event } from '@/types/event'
 import type { Template } from '@/config/templates'
+import Link from 'next/link'
 
 export default function CreateEventPage() {
   const router = useRouter()
@@ -73,15 +74,27 @@ export default function CreateEventPage() {
   }
 
   return (
-    <div className="container max-w-4xl py-10">
-      <Card>
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl">Yeni Etkinlik Oluştur</CardTitle>
-          <CardDescription>
+    <div className="container max-w-4xl mx-auto py-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+        <div>
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
+            <Link href="/events" className="hover:text-primary transition-colors">
+              Etkinlikler
+            </Link>
+            <Icons.chevronRight className="h-4 w-4" />
+            <span>Yeni Etkinlik</span>
+          </div>
+          <h1 className="text-4xl font-bold mb-2 text-foreground">
+            Yeni Etkinlik Oluştur
+          </h1>
+          <p className="text-lg text-muted-foreground">
             Etkinlik detaylarını girin ve bir şablon seçerek Bingo kartlarını oluşturun.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="template">Etkinlik Şablonu</Label>

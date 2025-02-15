@@ -15,6 +15,10 @@ import type { Event, BingoCard as BingoCardType, EventParticipant } from '@/type
 import type { User } from '@/types/user'
 import { toast } from 'sonner'
 import { EventParticipantsList } from '@/components/event-participants-list'
+import Link from 'next/link'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
+import { format } from 'date-fns'
+import { tr } from 'date-fns/locale'
 
 export default function EventPage() {
   const params = useParams()
@@ -216,83 +220,152 @@ export default function EventPage() {
   }
 
   return (
-    <div className="container max-w-4xl py-6 sm:py-10 px-4 sm:px-6 space-y-6 sm:space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl sm:text-2xl">{event.name}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4 text-sm sm:text-base">{event.description}</p>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs sm:text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Icons.users className="h-4 w-4 text-primary" />
-              <span>
-                {event.currentParticipants} / {event.maxParticipants} Katılımcı
-              </span>
-            </div>
-            {event.isTimeboxed && (
-              <div className="flex items-center gap-2">
-                <Icons.clock className="h-4 w-4 text-secondary" />
-                <span>Süre: {event.duration} dakika</span>
-              </div>
-            )}
+    <div className="container max-w-7xl mx-auto py-12">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+        <div>
+          <div className="flex items-center gap-2 text-muted-foreground mb-2">
+            <Link href="/events" className="hover:text-primary transition-colors">
+              Etkinlikler
+            </Link>
+            <Icons.chevronRight className="h-4 w-4" />
+            <span>Etkinlik Detayı</span>
           </div>
-        </CardContent>
-      </Card>
+          <h1 className="text-4xl font-bold mb-2 text-foreground">
+            {event.name}
+          </h1>
+        </div>
+      </div>
 
-      {user ? (
-        bingoCard ? (
-          <>
-            {!loading && (
-              <div className="overflow-x-auto -mx-4 sm:mx-0">
-                <div className="min-w-[320px] px-4 sm:px-0">
-                  <BingoCard
-                    cardId={bingoCard.id}
-                    userId={user.id}
-                    questions={bingoCard.questions}
-                    completedQuestions={bingoCard.completedQuestions}
-                    onQuestionClick={handleQuestionComplete}
-                    onQuestionVerify={handleQuestionVerify}
-                    loading={completing}
-                  />
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Sol Taraf - Etkinlik Detayları ve Bingo Kartı */}
+        <div className="flex-1 space-y-6">
+          {/* Etkinlik Bilgileri */}
+          <Card className="bg-card">
+            <CardContent className="p-6">
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                  <p className="text-lg">{event.description}</p>
+                  <div className="flex flex-wrap gap-4 mt-2">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <div className="p-2 rounded-full bg-primary/10">
+                        <Icons.users className="h-4 w-4 text-primary" />
+                      </div>
+                      <span>{event.currentParticipants} / {event.maxParticipants} Katılımcı</span>
+                    </div>
+                    {event.isTimeboxed && event.duration && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <div className="p-2 rounded-full bg-primary/10">
+                          <Icons.clock className="h-4 w-4 text-primary" />
+                        </div>
+                        <span>{event.duration} dakika</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <div className="p-2 rounded-full bg-primary/10">
+                        <Icons.calendar className="h-4 w-4 text-primary" />
+                      </div>
+                      <span>{format(event.startDate, 'dd MMMM yyyy HH:mm', { locale: tr })}</span>
+                    </div>
+                  </div>
                 </div>
+
+                {event.creator && (
+                  <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
+                    <Avatar className="h-12 w-12 ring-2 ring-background shadow-xl">
+                      {event.creator.avatarUrl ? (
+                        <AvatarImage
+                          src={event.creator.avatarUrl}
+                          alt={event.creator.name}
+                          referrerPolicy="no-referrer"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <AvatarFallback className="text-lg bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-medium">
+                          {event.creator.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground">{event.creator.name}</span>
+                      <span className="text-sm text-muted-foreground">{event.creator.email}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </CardContent>
+          </Card>
+
+          {/* Bingo Kartı veya Katılım Formu */}
+          {user ? (
+            bingoCard ? (
+              <>
+                {!loading && (
+                  <div className="overflow-x-auto -mx-4 sm:mx-0">
+                    <div className="min-w-[320px] px-4 sm:px-0">
+                      <BingoCard
+                        cardId={bingoCard.id}
+                        userId={user.id}
+                        questions={bingoCard.questions}
+                        completedQuestions={bingoCard.completedQuestions}
+                        onQuestionClick={handleQuestionComplete}
+                        onQuestionVerify={handleQuestionVerify}
+                        loading={completing}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {participants.some(p => p.userId === user.id) ? (
+                  <Card className="bg-card">
+                    <CardContent className="py-8">
+                      <div className="text-center space-y-4">
+                        <Icons.spinner className="h-8 w-8 animate-spin mx-auto text-primary" />
+                        <p className="text-muted-foreground">
+                          Bingo kartınız hazırlanıyor...
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <EventJoinForm
+                    event={event}
+                    onSubmit={handleJoin}
+                    loading={joining}
+                  />
+                )}
+              </>
+            )
+          ) : (
+            <Card className="bg-card">
+              <CardContent className="py-8">
+                <div className="text-center space-y-4">
+                  <Icons.logout className="h-8 w-8 mx-auto text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    Etkinliğe katılmak için giriş yapmalısınız.
+                  </p>
+                  <Button asChild>
+                    <Link href="/login">Giriş Yap</Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Sağ Taraf - Katılımcı Listesi */}
+        <div className="lg:w-80 xl:w-96 shrink-0">
+          <div className="lg:sticky lg:top-6">
             <EventParticipantsList
               eventId={eventId}
               participants={participants}
-              isAdmin={event.adminId === user.id}
+              isAdmin={event.adminId === user?.id}
               onParticipantRemove={loadParticipants}
             />
-          </>
-        ) : (
-          <>
-            {participants.some(p => p.userId === user.id) ? (
-              <Card>
-                <CardContent className="py-8">
-                  <div className="text-center text-muted-foreground text-sm sm:text-base">
-                    Bingo kartınız hazırlanıyor...
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <EventJoinForm
-                event={event}
-                onSubmit={handleJoin}
-                loading={joining}
-              />
-            )}
-          </>
-        )
-      ) : (
-        <Card>
-          <CardContent className="py-8">
-            <div className="text-center text-muted-foreground text-sm sm:text-base">
-              Etkinliğe katılmak için giriş yapmalısınız.
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 } 
